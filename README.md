@@ -219,7 +219,12 @@ git remote add origin https://github.com/kkap-one/infra-tasky-wiz.git
 ```
 7. To push the changes in your local repository to GitHub. -f option on git push forces the push
 ```bash
-git push -f origin master
+git push -f origin main
+```
+8. Ignore large file
+```bash
+git filter-branch -f --index-filter 'git rm --cached -r --ignore-unmatch .terraform/providers/registry.terraform.io/hashicorp/google/6.23.0/linux_amd64/terraform-provider-google_v6.23.0_x5'
+git filter-repo --invert-paths --path .terraform/providers/registry.terraform.io/hashicorp/google/6.23.0/linux_amd64/terraform-provider-google_v6.23.0_x5
 ```
 
 Approx GKE Standard Config:
