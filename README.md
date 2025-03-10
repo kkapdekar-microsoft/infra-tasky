@@ -199,7 +199,7 @@ git init
 ```
 2. set user name 
 ```bash
-git config --global user.name kkap.one
+git config --global user.name kkap-one
 ```
 3. set user email
 ```bash
@@ -215,7 +215,7 @@ git commit -m "initial commit"
 ```
 6. Add the URL for the remote repository where your local repository will be pushed
 ```bash
-git remote add origin REMOTE-URL
+git remote add origin https://github.com/kkap-one/infra-tasky-wiz.git
 ```
 7. To push the changes in your local repository to GitHub. -f option on git push forces the push
 ```bash
