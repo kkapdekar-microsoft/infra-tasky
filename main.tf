@@ -11,7 +11,7 @@ resource "google_project_service" "storage_api" {
 # Creating a public bucket 
 resource "google_storage_bucket" "public_bucket" {
   provider = google
-  name          = "kkap-public-demo-bucket" # Bucket names must be globally unique
+  name          = "kkap-public-open-bucket" # Bucket names must be globally unique
   location      = var.gcp_region
   force_destroy = true # Set to true if you want to allow bucket deletion even if it contains objects
 
@@ -32,7 +32,7 @@ resource "google_storage_bucket_iam_member" "public_read" {
 resource "google_compute_network" "vpc_network" {
   provider                  = google
   name                      = "kkap-vpc-network"
-  auto_create_subnetworks = false # We will create the subnet manually
+  auto_create_subnetworks   = false # We will create the subnet manually
   project                   = var.gcp_project
 }
 
@@ -40,7 +40,7 @@ resource "google_compute_network" "vpc_network" {
 resource "google_compute_subnetwork" "vpc_subnet" {
   provider      = google
   name          = "kkap-vpc-subnet"
-  ip_cidr_range = "10.0.0.0/8"
+  ip_cidr_range = "10.0.0.0/20"
   region        = var.gcp_region
   network       = google_compute_network.vpc_network.id
   project       = var.gcp_project
@@ -53,61 +53,66 @@ resource "google_compute_firewall" "app_to_db" {
   network     = google_compute_network.vpc_network.id
   description = "Allow traffic from app on gke to db server"
   project     = var.gcp_project
-  priority    = 1000
+  priority    = 1060
   direction   = "INGRESS"
-  enable_logging = true
+  #enable_logging = true
+  target_tags = ["db-server"]
 
   allow {
     protocol = "tcp"
     ports    = ["27017"]
   }
 
-  source_ranges = ["10.0.0.0/8"]
+  source_ranges = ["0.0.0.0/0"]
+
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # Create default firewall rules for the VPC
-resource "google_compute_firewall" "default_allow_internal" {
-  provider    = google
-  name        = "default-allow-internal"
-  network     = google_compute_network.vpc_network.id
-  description = "Allow internal traffic on the VPC"
-  project     = var.gcp_project
-  priority    = 65534
-  direction   = "INGRESS"
+#resource "google_compute_firewall" "default_allow_internal" {
+#  provider    = google
+#  name        = "default-allow-internal"
+#  network     = google_compute_network.vpc_network.id
+#  description = "Allow internal traffic on the VPC"
+#  project     = var.gcp_project
+#  priority    = 65534
+#  direction   = "INGRESS"
+#
+#  allow {
+#    protocol = "icmp"
+#  }
+#
+#  allow {
+#    protocol = "tcp"
+#    ports    = ["0-65535"]
+#  }
+#
+#  allow {
+#    protocol = "udp"
+#    ports    = ["0-65535"]
+#  }
+#
+#  source_ranges = ["10.128.0.0/9"]
+#}
 
-  allow {
-    protocol = "icmp"
-  }
-
-  allow {
-    protocol = "tcp"
-    ports    = ["0-65535"]
-  }
-
-  allow {
-    protocol = "udp"
-    ports    = ["0-65535"]
-  }
-
-  source_ranges = ["10.128.0.0/9"]
-}
-
-resource "google_compute_firewall" "default_allow_ssh" {
-  provider    = google
-  name        = "default-allow-ssh"
-  network     = google_compute_network.vpc_network.id
-  description = "Allow SSH traffic from anywhere"
-  project     = var.gcp_project
-  priority    = 65534
-  direction   = "INGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["22"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-}
+#resource "google_compute_firewall" "default_allow_ssh" {
+#  provider    = google
+#  name        = "default-allow-ssh"
+#  network     = google_compute_network.vpc_network.id
+#  description = "Allow SSH traffic from anywhere"
+#  project     = var.gcp_project
+#  priority    = 65534
+#  direction   = "INGRESS"
+#
+#  allow {
+#    protocol = "tcp"
+#    ports    = ["22"]
+#  }
+#
+#  source_ranges = ["0.0.0.0/0"]
+#}
 
 resource "google_compute_firewall" "allow_iap_ingress" {
   provider    = google
@@ -175,6 +180,8 @@ resource "google_project_service" "compute_api" {
   project = var.gcp_project
 }
 
+
+
 # Create a Compute Engine for MongoDB
 resource "google_compute_instance" "mongo_db_server" {
   provider       = google
@@ -182,6 +189,12 @@ resource "google_compute_instance" "mongo_db_server" {
   machine_type   = "e2-medium" # Choose an appropriate machine type
   project        = var.gcp_project
   zone           = var.gcp_zone
+  
+  service_account {
+    email = data.google_compute_default_service_account.default.email
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+  
   boot_disk {
     initialize_params {
       image = "debian-cloud/debian-12" # Choose an appropriate image
@@ -282,17 +295,24 @@ resource "google_project_service" "gke_api" {
   project = var.gcp_project
 }
 
-# Create a GKE Autopilot cluster
+# Create a GKE Standard cluster
 resource "google_container_cluster" "gke_cluster" {
   provider = google
-  name               = "kkap-autopilot-cluster"
+  name               = "kkap-terra-st-cluster"
   location           = var.gcp_region
   project            = var.gcp_project
   deletion_protection = false
 
+  initial_node_count = 1
+
+    node_config {
+      machine_type = "e2-medium"
+      disk_size_gb = 100
+    }
+
   # Autopilot settings
-  enable_autopilot = true
-  
+  # enable_autopilot = true
+
   # Network configuration
   network    = google_compute_network.vpc_network.id
   subnetwork = google_compute_subnetwork.vpc_subnet.id

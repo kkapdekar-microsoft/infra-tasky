@@ -134,6 +134,8 @@ Refer to the official Google Cloud documentation for detailed guidance on pushin
 1.  **Authenticate Docker with Google Cloud - execute in tasky folder:**
 gcloud auth configure-docker \
     Asia-south1-docker.pkg.dev
+gcloud auth configure-docker \
+    us-west1-docker.pkg.dev
 
 ### Image Management - Docker build run push
 Execute in "tasky" folder
@@ -141,18 +143,26 @@ Execute in "tasky" folder
 1. **Determine the Image Name**
 ```bash
 asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky
+us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky
+
 ```
 2. **Building the Image**
 ```bash
-docker build -t asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky:latest . 
+docker build -t asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky:latest .
+docker build -t us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky:latest .
+
 ```
 3. **Test the Image**
 ```bash
 docker run -p 8080:8080 asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky
+docker run -p 8080:8080 us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky
+
 ```
 4. **Push the Image to Artifact Registry**
 ```bash
 docker push asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky:latest
+docker push us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky:latest
+
 ```
 
 ## GKE
@@ -160,13 +170,56 @@ docker push asia-south1-docker.pkg.dev/kkap-vuln-demo/docker-repo/tasky:latest
 ### Get unique ID of service account used in cluster
 ```bash
 gcloud iam service-accounts describe 333306257483-compute@developer.gserviceaccount.com
+gcloud iam service-accounts describe 815204485712-compute@developer.gserviceaccount.com
 ```
 
 ### Copy unique id and assign service account cluster admin role
 ```bash
-kubectl create clusterrolebinding kkap-autoc-sa-admin \ #clusterRoleBindingName
+kubectl create clusterrolebinding kkap-terra-st-cluster-sa-admin \
     --clusterrole cluster-admin \
-    --user 'SA_UNIQUE_ID' #SA unique ID
+    --user 116397052416636905416
+```
+
+## Public Bucket access
+
+1. You can access a public object using the following URI: 
+```bash
+https://storage.googleapis.com/kkap-public-open-bucket/db-backup/10-03-25_H00m01/test/todos.bson
+```
+
+2. You can also list all the objects in a bucket using the following URI: 
+```bash
+https://console.cloud.google.com/storage/browser/kkap-public-open-bucket
+```
+## Git
+
+1. initialise local directory as a Git repository. By default, the initial branch is called main. you can set the name of the default branch using -b
+```bash
+git init
+```
+2. set user name 
+```bash
+git config --global user.name kkap.one
+```
+3. set user email
+```bash
+git config --global user.email triplek.k@gmail.com
+```
+4. Add the files in your new local repository. This stages them for the commit.
+```bash
+git add .
+```
+5. Commit the files that you've staged in your local repository.
+```bash
+git commit -m "initial commit"
+```
+6. Add the URL for the remote repository where your local repository will be pushed
+```bash
+git remote add origin REMOTE-URL
+```
+7. To push the changes in your local repository to GitHub. -f option on git push forces the push
+```bash
+git push -f origin master
 ```
 
 Approx GKE Standard Config:

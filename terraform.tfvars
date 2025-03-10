@@ -1,3 +1,3 @@
-gcp_project = "kkap-vuln-demo"
-gcp_region = "asia-south1"
-gcp_zone = "asia-south1-a"
+gcp_project = "clgcporg10-161"
+gcp_region = "us-west1"
+gcp_zone = "us-west1-a"
