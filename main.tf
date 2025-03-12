@@ -299,7 +299,7 @@ resource "google_project_service" "gke_api" {
 resource "google_container_cluster" "gke_cluster" {
   provider = google
   name               = "kkap-terra-st-cluster"
-  location           = var.gcp_region
+  location           = var.gcp_zone
   project            = var.gcp_project
   deletion_protection = false
 
@@ -307,7 +307,7 @@ resource "google_container_cluster" "gke_cluster" {
 
     node_config {
       machine_type = "e2-medium"
-      disk_size_gb = 100
+      disk_size_gb = 10
     }
 
   # Autopilot settings
@@ -324,16 +324,17 @@ resource "google_container_cluster" "gke_cluster" {
 # Export the cluster name and endpoint
 output "gke_cluster_name" {
   value       = google_container_cluster.gke_cluster.name
-  description = "The name of the GKE Autopilot cluster"
+  description = "GKE cluster name"
 }
 
 output "gke_cluster_endpoint" {
   value       = google_container_cluster.gke_cluster.endpoint
-  description = "The endpoint of the GKE Autopilot cluster"
+  description = "GKE cluster endpoint"
 }
 
 output "gke_cluster_master_version" {
   value = google_container_cluster.gke_cluster.master_version
+  description = "GKE cluster master version"
 }
 
 

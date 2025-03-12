@@ -227,6 +227,11 @@ git filter-branch -f --index-filter 'git rm --cached -r --ignore-unmatch .terraf
 git filter-repo --invert-paths --path .terraform/providers/registry.terraform.io/hashicorp/google/6.23.0/linux_amd64/terraform-provider-google_v6.23.0_x5
 ```
 
+9. If you try to pull and get "Refusing to merge unrelated histories"; use below
+```bash
+git pull origin branch_name --allow-unrelated-histories
+```
+
 Approx GKE Standard Config:
 POST https://container.googleapis.com/v1beta1/projects/kkap-vuln-demo/locations/asia-south1/clusters
 {
