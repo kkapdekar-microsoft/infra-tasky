@@ -132,10 +132,10 @@ Refer to the official Google Cloud documentation for detailed guidance on pushin
 ### Authentication
 
 1.  **Authenticate Docker with Google Cloud - execute in tasky folder:**
-gcloud auth configure-docker \
-    Asia-south1-docker.pkg.dev
+```bash
 gcloud auth configure-docker \
     us-west1-docker.pkg.dev
+```
 
 ### Image Management - Docker build run push
 Execute in "tasky" folder
@@ -165,12 +165,19 @@ docker push us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky:latest
 
 ```
 
+### Generate SBOM for images in docker repo
+```bash
+gcloud artifacts sbom export --uri=us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky
+```
+
 ## GKE
 
 ### Get unique ID of service account used in cluster
 ```bash
 gcloud iam service-accounts describe 333306257483-compute@developer.gserviceaccount.com
 gcloud iam service-accounts describe 815204485712-compute@developer.gserviceaccount.com
+kubectl get deployment/pod <name> -n <namespace> -o yaml | grep "iam.gke.io/gcp-service-account"
+kubectl get deployment/pod nginx-68bdc4b96b-2ctn7 -n default -o yaml | grep "iam.gke.io/gcp-service-account"
 ```
 
 ### Copy unique id and assign service account cluster admin role
@@ -191,6 +198,7 @@ https://storage.googleapis.com/kkap-public-open-bucket/db-backup/10-03-25_H00m01
 ```bash
 https://console.cloud.google.com/storage/browser/kkap-public-open-bucket
 ```
+
 ## Git
 
 1. initialise local directory as a Git repository. By default, the initial branch is called main. you can set the name of the default branch using -b

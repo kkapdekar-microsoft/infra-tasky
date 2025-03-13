@@ -285,7 +285,7 @@ resource "google_artifact_registry_repository" "docker_repo" {
 
 
 
-# GKE Autopilot Cluster to host Tasky app
+# GKE Standard Cluster to host Tasky app
 
 # Enable the GKE API
 resource "google_project_service" "gke_api" {
@@ -339,6 +339,51 @@ output "gke_cluster_master_version" {
 
 
 
+
+# Binary Authorization
+
+# Enable the Binary Authorization API
+resource "google_project_service" "binary_authorization_api" {
+  provider = google
+  service            = "binaryauthorization.googleapis.com"
+  disable_on_destroy = false
+  project = var.gcp_project
+}
+
+# Enable the Cloud Key Management Service (KMS) API
+resource "google_project_service" "kms_api" {
+  provider = google
+  service            = "cloudkms.googleapis.com"
+  disable_on_destroy = false
+  project = var.gcp_project
+  depends_on = [
+    google_project_service.binary_authorization_api
+  ]
+}
+
+# Create a Key Ring
+resource "google_kms_key_ring" "key_ring" {
+  provider   = google
+  name       = "kkap-key-ring"
+  location   = var.gcp_region
+  project    = var.gcp_project
+  depends_on = [google_project_service.kms_api]
+}
+
+# Create a Crypto Key (Signing Key)
+resource "google_kms_crypto_key" "signing_key" {
+  provider   = google
+  name            = "kkap-signing-key"
+  key_ring        = google_kms_key_ring.key_ring.id
+  purpose         = "ASYMMETRIC_SIGN"
+  # rotation_period = "100000s"
+  version_template {
+    algorithm = "EC_SIGN_P256_SHA256"
+    #algorithm = "RSA_SIGN_PKCS1_4096_SHA512"
+  # protection_level = "HSM"
+  }
+  depends_on = [google_kms_key_ring.key_ring]
+}
 
 
 
