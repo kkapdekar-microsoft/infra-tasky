@@ -70,49 +70,28 @@ resource "google_compute_firewall" "app_to_db" {
   }
 }
 
-# Create default firewall rules for the VPC
-#resource "google_compute_firewall" "default_allow_internal" {
-#  provider    = google
-#  name        = "default-allow-internal"
-#  network     = google_compute_network.vpc_network.id
-#  description = "Allow internal traffic on the VPC"
-#  project     = var.gcp_project
-#  priority    = 65534
-#  direction   = "INGRESS"
-#
-#  allow {
-#    protocol = "icmp"
-#  }
-#
-#  allow {
-#    protocol = "tcp"
-#    ports    = ["0-65535"]
-#  }
-#
-#  allow {
-#    protocol = "udp"
-#    ports    = ["0-65535"]
-#  }
-#
-#  source_ranges = ["10.128.0.0/9"]
-#}
+# Create firewall rule to allow SSH to mongo server from internet
+resource "google_compute_firewall" "allow_ssh_to_mongo" {
+  provider    = google
+  name        = "allow-ssh-to-mongo"
+  network     = google_compute_network.vpc_network.id
+  description = "Allow SSH traffic to mongo server from anywhere"
+  project     = var.gcp_project
+  priority    = 1000 #Lower than the firewall above
+  direction   = "INGRESS"
+  target_tags = ["db-server"]  
 
-#resource "google_compute_firewall" "default_allow_ssh" {
-#  provider    = google
-#  name        = "default-allow-ssh"
-#  network     = google_compute_network.vpc_network.id
-#  description = "Allow SSH traffic from anywhere"
-#  project     = var.gcp_project
-#  priority    = 65534
-#  direction   = "INGRESS"
-#
-#  allow {
-#    protocol = "tcp"
-#    ports    = ["22"]
-#  }
-#
-#  source_ranges = ["0.0.0.0/0"]
-#}
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["0.0.0.0/0"] // Allow connections from any ip
+
+  log_config {
+    metadata = "INCLUDE_ALL_METADATA"
+  }
+}
 
 resource "google_compute_firewall" "allow_iap_ingress" {
   provider    = google
@@ -180,7 +159,13 @@ resource "google_project_service" "compute_api" {
   project = var.gcp_project
 }
 
-
+# Reserve a static public IP address for MongoDB server
+resource "google_compute_address" "static_public_ip" {
+  provider     = google
+  name         = "static-public-ip-mongodb"
+  project      = var.gcp_project
+  region       = var.gcp_region
+}
 
 # Create a Compute Engine for MongoDB
 resource "google_compute_instance" "mongo_db_server" {
@@ -204,6 +189,9 @@ resource "google_compute_instance" "mongo_db_server" {
   network_interface {
     subnetwork = google_compute_subnetwork.vpc_subnet.id # Use the default network or specify a custom one
     network_ip = google_compute_address.static_internal_ip.address # Use the reserved IP address
+    access_config {
+      nat_ip = google_compute_address.static_public_ip.address
+    }
   }
   allow_stopping_for_update = true
 

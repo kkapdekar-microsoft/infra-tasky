@@ -240,6 +240,41 @@ git filter-repo --invert-paths --path .terraform/providers/registry.terraform.io
 git pull origin branch_name --allow-unrelated-histories
 ```
 
+## Binary Auth attestation
+1. Sign and create attestation
+```bash
+gcloud beta container binauthz attestations sign-and-create \
+  --project="clgcporg10-161" \
+  --artifact-url="us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky@sha256:c61a4045b12e95fa6fe882500c623b9f7c6eed8d48108ad6e059ca331b9077bd" \
+  --attestor="kkap-attestor" \
+  --attestor-project="clgcporg10-161" \
+  --keyversion-project="clgcporg10-161"
+  --keyversion-location="us-west1" \
+  --keyversion-keyring="kkap-key-ring" \
+  --keyversion-key="kkap-signing-key" \
+  --keyversion="1"
+```
+
+gcloud beta container binauthz attestations sign-and-create \
+  --project="clgcporg10-161" \
+  --artifact-url=ARTIFACT_URL (--keyversion=KEYVERSION : --keyversion-key=KEYVERSION_KEY --keyversion-keyring=KEYVERSION_KEYRING --keyversion-location=KEYVERSION_LOCATION --keyversion-project=KEYVERSION_PROJECT)
+  "us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky@sha256:c61a4045b12e95fa6fe882500c623b9f7c6eed8d48108ad6e059ca331b9077bd" \
+  --attestor="kkap-attestor" \
+  --attestor-project="clgcporg10-161" \
+  --keyversion-project="clgcporg10-161"
+  --keyversion-location="us-west1" \
+  --keyversion-keyring="kkap-key-ring" \
+  --keyversion-key="kkap-signing-key" \
+  --keyversion="1"
+
+2. Verify image is attested
+```bash
+gcloud container binauthz attestations list\
+  --project="clgcporg10-161"\
+  --attestor="projects/clgcporg10-161/attestors/kkap-attestor"\
+  --artifact-url=us-west1-docker.pkg.dev/clgcporg10-161/docker-repo/tasky@sha256:c61a4045b12e95fa6fe882500c623b9f7c6eed8d48108ad6e059ca331b9077bd
+```
+
 Approx GKE Standard Config:
 POST https://container.googleapis.com/v1beta1/projects/kkap-vuln-demo/locations/asia-south1/clusters
 {
