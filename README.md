@@ -105,6 +105,10 @@ net:
   port: 27017
   bindIp: 0.0.0.0
 ```
+3. **Check for updated service**
+```bash
+netstat -nltp
+```
 
 ### DB Verification 
 
@@ -121,6 +125,46 @@ net:
 3.  **List Collections:**
     ```bash
     db.getCollectionNames()
+    ```
+4.  **Start Stop mongo:**
+    ```bash
+    sudo service mongod start
+    sudo service mongod stop
+   ```
+
+### DB Backup Cron Job
+
+1. **db backup script**
+    ```bash
+    mkdir scripts
+    cat <<EOF > ~/scripts/mongo_backup.sh
+    #!/bin/bash
+    DIR=$(date "+%d-%m-%y_H%Hm%M")
+    echo "$DIR"
+    #Destination to store your mongo backup
+    DEST=~/db_backup/$DIR
+    #making dest directory
+    mkdir $DEST
+    # If mongodb is protected with username password.
+    # Set AUTH_ENABLED to 1 
+    # and add MONGO_USER and MONGO_PASSWD values correctly
+    AUTH_ENABLED=1
+    MONGO_HOST='10.0.0.2'
+    MONGO_PORT='27017'
+    MONGO_USER='myUserAdmin'
+    MONGO_PASSWD='abc123'
+    if [ ${AUTH_ENABLED} -eq 1 ]; then
+      AUTH_PARAM=" --username ${MONGO_USER} --password ${MONGO_PASSWD} --authenticationDatabase=admin "
+    fi
+      mongodump --host ${MONGO_HOST} --port ${MONGO_PORT} ${AUTH_PARAM} --db=test --out=$DEST
+    gsutil cp -r $DEST gs://kkap-public-demo-bucket/db-backup/$DIR
+    EOF
+    ```
+
+2. **Script to setup cron job**
+    ```bash
+    crontab -e
+    1 */4 * * * ~/scripts/mongo_backup.sh
     ```
 
 
